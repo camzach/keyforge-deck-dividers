@@ -14,9 +14,16 @@
       <span id="stage-1-loading" hidden>Loading decks...</span>
     </div>
     <div id="stage-2" hidden>
-      Search <input id="deck-search"></input>
+      <form id="deck-sort-controls">
+        Search <input id="search"></input>
+        Sort by name <input type="radio" value="name" name="sort-by"></input>
+        Sort by expansion <input type="radio" value="expansion" name="sort-by"></input>
+        Sort by date <input type="radio" value="date" name="sort-by"></input>
+        Sort asc <input type="radio" value="asc" name="sort-order"></input>
+        Sort desc <input type="radio" value="desc" name="sort-order"></input>
+      </form>
       <br/>
-      <select multiple id="select-decks"></select>
+      <select multiple id="select-decks" style="height: 500px;"></select>
       <button id="go-2">Go</button>
     </div>
     <div id="result" hidden="hidden"></div>

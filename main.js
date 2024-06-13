@@ -2,24 +2,43 @@ import { generate_deck_divider, expansion_order } from "./module.js";
 
 const apiKey = document.getElementById("api-key");
 const select = document.getElementById("select-decks");
-const search = document.getElementById("deck-search");
+const sort = document.getElementById("deck-sort-controls");
 const decks = new Map();
+window.decks = decks;
 
-function filterDeckList(filter) {
-  const matchingDecks = Array.from(decks.entries())
-    .filter(([deck]) => filter === undefined || deck.includes(filter))
-    .sort(([a], [b]) =>
-      a.replace(/^[“”]/, "").localeCompare(b.replace(/^[“”]/, ""))
+function updateDeckList() {
+  const matchingDecks = Array.from(decks.values())
+    .filter(
+      (deck) =>
+        !sort.elements["search"] ||
+        deck.name.includes(sort.elements["search"].value)
     )
-    .sort(
-      ([_, a], [__, b]) =>
-        expansion_order.indexOf(a.expansion) -
-        expansion_order.indexOf(b.expansion)
+    .sort((a, b) =>
+      a.name.replace(/^[“”]/, "").localeCompare(b.name.replace(/^[“”]/, ""))
     )
-    .map(([deck]) => {
+    .sort((a, b) => {
+      let result = 0;
+      switch (sort.elements["sort-by"].value) {
+        case "name":
+          break;
+        case "expansion":
+          result =
+            expansion_order.indexOf(a.expansion) -
+            expansion_order.indexOf(b.expansion);
+          break;
+        case "date":
+          result = new Date(a.dateAdded) - new Date(b.dateAdded);
+          break;
+      }
+      if (sort.elements["sort-order"].value === "desc") {
+        result *= -1;
+      }
+      return result;
+    })
+    .map((deck) => {
       const opt = document.createElement("option");
-      opt.value = deck;
-      opt.label = deck;
+      opt.value = deck.name;
+      opt.label = `${deck.name} - ${deck.expansion} - ${deck.dateAdded}`;
       return opt;
     });
 
@@ -37,7 +56,7 @@ async function go() {
   ).then((res) => res.json())) {
     decks.set(deck.name, deck);
   }
-  filterDeckList();
+  updateDeckList();
   document.getElementById("stage-1").hidden = true;
   document.getElementById("stage-2").hidden = false;
 }
@@ -57,6 +76,4 @@ async function go2() {
 
 document.getElementById("go").addEventListener("click", go);
 document.getElementById("go-2").addEventListener("click", go2);
-search.addEventListener("change", (e) => {
-  filterDeckList(e.target.value);
-});
+sort.addEventListener("input", updateDeckList);
