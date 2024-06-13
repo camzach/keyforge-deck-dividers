@@ -7,9 +7,13 @@ const PAGE_WIDTH_IN = 8.5;
 const PAGE_HEIGHT_IN = 11;
 const PAGE_MARGIN_IN = 0.25;
 
-const HEADER_HEIGHT = Math.floor(PPI * DECK_DEPTH_IN);
-const IMAGE_HEIGHT = Math.floor(PPI * (CARD_HEIGHT_IN + DECK_DEPTH_IN));
-const IMAGE_WIDTH = Math.floor(PPI * CARD_WIDTH_IN);
+const IMAGE_HEIGHT = PPI * (CARD_HEIGHT_IN + DECK_DEPTH_IN);
+const IMAGE_WIDTH = PPI * CARD_WIDTH_IN;
+
+const IMAGE_MARGIN = 25;
+const HEADER_HEIGHT = PPI * DECK_DEPTH_IN;
+const BODY_NAME_AREA = PPI * 0.3;
+const CARD_AREA_TOP = HEADER_HEIGHT + BODY_NAME_AREA + IMAGE_MARGIN * 2;
 
 function loadImage(src) {
   const im = new Image();
@@ -60,11 +64,11 @@ const houses = await Promise.all(
 
 function make_trigram(house_list) {
   const canvas = document.createElement("canvas");
-  canvas.width = HEADER_HEIGHT;
-  canvas.height = HEADER_HEIGHT;
+  canvas.width = HEADER_HEIGHT - IMAGE_MARGIN * 2;
+  canvas.height = HEADER_HEIGHT - IMAGE_MARGIN * 2;
   const ctx = canvas.getContext("2d");
 
-  const HOUSE_HEIGHT = Math.ceil(HEADER_HEIGHT / 2.5);
+  const HOUSE_HEIGHT = Math.ceil(canvas.height / 2.5);
   const HOUSE_RADIUS = Math.ceil(HOUSE_HEIGHT / 2);
   const ROTATION_RADIUS = HOUSE_RADIUS + 10;
 
@@ -72,8 +76,8 @@ function make_trigram(house_list) {
     const center_x = Math.ceil(Math.cos(angle) * ROTATION_RADIUS);
     const center_y = Math.ceil(Math.sin(angle) * ROTATION_RADIUS);
     return [
-      center_x - HOUSE_RADIUS + Math.ceil(HEADER_HEIGHT / 2),
-      center_y - HOUSE_RADIUS + Math.ceil(HEADER_HEIGHT / 2),
+      center_x - HOUSE_RADIUS + Math.ceil(canvas.width / 2),
+      center_y - HOUSE_RADIUS + Math.ceil(canvas.height / 2),
       HOUSE_HEIGHT,
       HOUSE_HEIGHT,
     ];
@@ -86,8 +90,14 @@ function make_trigram(house_list) {
   return canvas;
 }
 
+/**
+ *
+ * @param {string[]} lines
+ * @param {[int, int]} pos
+ * @param {CanvasRenderingContext2D} ctx
+ */
 function draw_multiline_text(lines, pos, ctx) {
-  const lineHeight = ctx.measureText("M").fontBoundingBoxAscent;
+  const lineHeight = ctx.measureText("M").fontBoundingBoxAscent + 5;
   let [x, y] = pos;
   for (let i = 0; i < lines.length; i++) {
     ctx.strokeText(lines[i], x, y + i * lineHeight);
@@ -132,10 +142,8 @@ function generate_deck_divider(deck) {
 
   ctx.drawImage(
     trigram,
-    IMAGE_WIDTH - trigram.width,
-    0,
-    trigram.width,
-    HEADER_HEIGHT
+    IMAGE_WIDTH - trigram.width - IMAGE_MARGIN,
+    IMAGE_MARGIN
   );
 
   const expansion = expansions[deck.expansion];
@@ -146,58 +154,94 @@ function generate_deck_divider(deck) {
   ];
   ctx.drawImage(
     expansion,
-    25,
+    IMAGE_MARGIN,
     Math.floor((HEADER_HEIGHT - expansion_size[1]) / 2),
     ...expansion_size
   );
 
-  const name_font_size = Math.floor(HEADER_HEIGHT / 4);
-  let font = `${name_font_size}px Righteous`;
-  ctx.font = font;
+  const name_font_size = HEADER_HEIGHT / 3;
+  const name_font = `${name_font_size}px Righteous`;
+  ctx.font = name_font;
   const name_line_height = ctx.measureText("M").fontBoundingBoxAscent;
-  const lines = break_text(
+  const header_name_lines = break_text(
     deck.name,
-    font,
-    IMAGE_WIDTH - trigram.width - expansion_size[0] - 100
+    name_font,
+    IMAGE_WIDTH - trigram.width - expansion_size[0] - IMAGE_MARGIN * 4
   );
 
-  const name_y =
+  const header_name_y =
     HEADER_HEIGHT / 2 +
     name_line_height / 2 -
-    Math.max(0, lines.length - 1) * (name_line_height / 2);
+    Math.max(0, header_name_lines.length - 1) * (name_line_height / 2);
 
-  draw_multiline_text(lines, [expansion_size[0] + 50, name_y], ctx);
+  draw_multiline_text(
+    header_name_lines,
+    [expansion_size[0] + IMAGE_MARGIN * 2, header_name_y],
+    ctx
+  );
 
   ctx.beginPath();
   ctx.moveTo(0, HEADER_HEIGHT);
   ctx.lineTo(IMAGE_WIDTH, HEADER_HEIGHT);
   ctx.stroke();
 
-  font = "25px sans-serif";
-  ctx.font = font;
+  const body_name_font_size = BODY_NAME_AREA / 3;
+  const body_name_font = `${body_name_font_size}px Righteous`;
+  const body_name_lines = break_text(
+    deck.name,
+    body_name_font,
+    IMAGE_WIDTH - IMAGE_MARGIN * 2
+  );
+  ctx.font = body_name_font;
+  const body_name_line_height = ctx.measureText("M").fontBoundingBoxAscent;
 
-  const COL_WIDTH = (IMAGE_WIDTH - 50) / 3;
+  const body_name_y =
+    HEADER_HEIGHT +
+    IMAGE_MARGIN +
+    BODY_NAME_AREA / 2 +
+    body_name_line_height / 2 -
+    Math.max(0, body_name_lines.length - 1) * (body_name_line_height / 2);
+
+  draw_multiline_text(body_name_lines, [IMAGE_MARGIN, body_name_y], ctx);
+
+  const card_name_font = "25px sans-serif";
+  ctx.font = card_name_font;
+
+  const COL_WIDTH = (IMAGE_WIDTH - IMAGE_MARGIN * 2) / 3;
+  const HOUSE_HEIGHT = COL_WIDTH / 3;
   for (let i = 0; i < deck.housesAndCards.length; i++) {
     const house_and_cards = deck.housesAndCards[i];
 
     const house_image = houses[house_and_cards.house];
-    house_image.width = 100;
-    house_image.height = 100;
     ctx.drawImage(
       house_image,
-      Math.floor(25 + COL_WIDTH * i + COL_WIDTH / 2 - 50),
-      HEADER_HEIGHT + 175,
-      house_image.width,
-      house_image.height
+      Math.floor(
+        IMAGE_MARGIN + COL_WIDTH * i + COL_WIDTH / 2 - IMAGE_MARGIN * 2
+      ),
+      CARD_AREA_TOP,
+      HOUSE_HEIGHT,
+      HOUSE_HEIGHT
     );
 
-    let last_bottom = HEADER_HEIGHT + 300;
+    let last_bottom = CARD_AREA_TOP + HOUSE_HEIGHT + IMAGE_MARGIN;
 
     for (let j = 0; j < house_and_cards.cards.length; j++) {
       const card = house_and_cards.cards[j];
 
-      const lines = break_text(card.cardTitle, font, COL_WIDTH - 50);
-      const pos = [25 + COL_WIDTH * i + (i > 0 ? 25 : 0), last_bottom + 25];
+      const lines = break_text(
+        card.cardTitle,
+        card_name_font,
+        COL_WIDTH - IMAGE_MARGIN * 2
+      );
+      const pos = [
+        IMAGE_MARGIN + COL_WIDTH * i + (i > 0 ? IMAGE_MARGIN : 0),
+        last_bottom + IMAGE_MARGIN,
+      ];
+      if (card.enhanced) {
+        ctx.fillStyle = "#00f";
+      } else {
+        ctx.fillStyle = "#000";
+      }
       draw_multiline_text(lines, pos, ctx);
       last_bottom = pos[1];
       for (const line in lines) {
@@ -207,13 +251,13 @@ function generate_deck_divider(deck) {
   }
 
   ctx.beginPath();
-  ctx.moveTo(25 + COL_WIDTH, HEADER_HEIGHT + 275);
-  ctx.lineTo(25 + COL_WIDTH, IMAGE_HEIGHT - 275);
+  ctx.moveTo(IMAGE_MARGIN + COL_WIDTH, CARD_AREA_TOP);
+  ctx.lineTo(IMAGE_MARGIN + COL_WIDTH, IMAGE_HEIGHT - 275);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(25 + COL_WIDTH * 2, HEADER_HEIGHT + 275);
-  ctx.lineTo(25 + COL_WIDTH * 2, IMAGE_HEIGHT - 275);
+  ctx.moveTo(IMAGE_MARGIN + COL_WIDTH * 2, CARD_AREA_TOP);
+  ctx.lineTo(IMAGE_MARGIN + COL_WIDTH * 2, IMAGE_HEIGHT - 275);
   ctx.stroke();
 
   return canvas;
