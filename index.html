@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="stage-1">
+      Enter your <a href="https://decksofkeyforge.com/about/sellers-and-devs">DOK API key</a>
+      <input id="api-key"></input>
+      <button id="go">Go</button>
+      <br/>
+      <span id="stage-1-loading" hidden>Loading decks...</span>
+    </div>
+    <div id="stage-2" hidden>
+      Search <input id="deck-search"></input>
+      <br/>
+      <select multiple id="select-decks"></select>
+      <button id="go-2">Go</button>
+    </div>
+    <div id="result" hidden="hidden"></div>
+    <script src="./main.js" type="module"></script>
+  </body>
+</html>
