@@ -3,16 +3,12 @@ const CARD_HEIGHT_IN = 3.5;
 const CARD_WIDTH_IN = 2.5;
 const DECK_DEPTH_IN = 0.5;
 
-const PAGE_WIDTH_IN = 8.5;
-const PAGE_HEIGHT_IN = 11;
-const PAGE_MARGIN_IN = 0.25;
+export const IMAGE_HEIGHT = PPI * (CARD_HEIGHT_IN + DECK_DEPTH_IN);
+export const IMAGE_WIDTH = PPI * CARD_WIDTH_IN;
 
-const IMAGE_HEIGHT = PPI * (CARD_HEIGHT_IN + DECK_DEPTH_IN);
-const IMAGE_WIDTH = PPI * CARD_WIDTH_IN;
-
-const IMAGE_MARGIN = 25;
-const HEADER_HEIGHT = PPI * DECK_DEPTH_IN;
-const BODY_NAME_AREA = PPI * 0.3;
+const IMAGE_MARGIN = 0.07 * PPI;
+const HEADER_HEIGHT = DECK_DEPTH_IN * PPI;
+const BODY_NAME_AREA = 0.3 * PPI;
 const CARD_AREA_TOP = HEADER_HEIGHT + BODY_NAME_AREA + IMAGE_MARGIN * 2;
 
 function loadImage(src) {
@@ -37,12 +33,15 @@ export const expansion_order = [
   "GRIM_REMINDERS",
   "MENAGERIE_2024",
   "VAULT_MASTERS_2024",
-  // "AEMBER_SKIES",
+  "AEMBER_SKIES",
+  "TOKENS_OF_CHANGE",
+  "MARTIAN_CIVIL_WAR",
+  "MORE_MUTATION",
 ];
 const expansions = await Promise.all(
   expansion_order.map(async (expansion) => [
     expansion,
-    await loadImage(`./assets/${expansion.replace(/_\d+$/, "")}.png`),
+    await loadImage(`./assets/sets/${expansion.replace(/_\d+$/, "")}.png`),
   ])
 ).then(Object.fromEntries);
 const houses = await Promise.all(
@@ -59,7 +58,14 @@ const houses = await Promise.all(
     "StarAlliance",
     "Unfathomable",
     "Untamed",
-  ].map(async (house) => [house, await loadImage(`./assets/${house}.png`)])
+    "Elders",
+    "IronyxRebels",
+    "Skyborn",
+    "Redemption",
+  ].map(async (house) => [
+    house,
+    await loadImage(`./assets/houses/${house}.png`),
+  ])
 ).then(Object.fromEntries);
 
 function make_trigram(house_list) {
@@ -70,7 +76,7 @@ function make_trigram(house_list) {
 
   const HOUSE_HEIGHT = Math.ceil(canvas.height / 2.5);
   const HOUSE_RADIUS = Math.ceil(HOUSE_HEIGHT / 2);
-  const ROTATION_RADIUS = HOUSE_RADIUS + 10;
+  const ROTATION_RADIUS = HOUSE_RADIUS + 0.03 * PPI;
 
   function coords(angle) {
     const center_x = Math.ceil(Math.cos(angle) * ROTATION_RADIUS);
@@ -83,9 +89,13 @@ function make_trigram(house_list) {
     ];
   }
 
-  ctx.drawImage(houses[house_list[0]], ...coords((Math.PI * 4) / 3));
-  ctx.drawImage(houses[house_list[1]], ...coords(0));
-  ctx.drawImage(houses[house_list[2]], ...coords((Math.PI * 2) / 3));
+  if (house_list.length === 1) {
+    ctx.drawImage(houses[house_list[0]], 0, 0, canvas.height, canvas.width);
+  } else {
+    ctx.drawImage(houses[house_list[0]], ...coords((Math.PI * 4) / 3));
+    ctx.drawImage(houses[house_list[1]], ...coords(0));
+    ctx.drawImage(houses[house_list[2]], ...coords((Math.PI * 2) / 3));
+  }
 
   return canvas;
 }
@@ -129,7 +139,7 @@ function break_text(text, font, max_width) {
   return lines;
 }
 
-function generate_deck_divider(deck) {
+export function generate_deck_divider(deck) {
   const canvas = document.createElement("canvas");
   canvas.width = IMAGE_WIDTH;
   canvas.height = IMAGE_HEIGHT;
@@ -204,7 +214,7 @@ function generate_deck_divider(deck) {
 
   draw_multiline_text(body_name_lines, [IMAGE_MARGIN, body_name_y], ctx);
 
-  const card_name_font = "25px sans-serif";
+  const card_name_font = `${0.07 * PPI}px sans-serif`;
   ctx.font = card_name_font;
 
   const COL_WIDTH = (IMAGE_WIDTH - IMAGE_MARGIN * 2) / 3;
@@ -252,32 +262,64 @@ function generate_deck_divider(deck) {
 
   ctx.beginPath();
   ctx.moveTo(IMAGE_MARGIN + COL_WIDTH, CARD_AREA_TOP);
-  ctx.lineTo(IMAGE_MARGIN + COL_WIDTH, IMAGE_HEIGHT - 275);
+  ctx.lineTo(IMAGE_MARGIN + COL_WIDTH, IMAGE_HEIGHT - 0.75 * PPI);
   ctx.stroke();
 
   ctx.beginPath();
   ctx.moveTo(IMAGE_MARGIN + COL_WIDTH * 2, CARD_AREA_TOP);
-  ctx.lineTo(IMAGE_MARGIN + COL_WIDTH * 2, IMAGE_HEIGHT - 275);
+  ctx.lineTo(IMAGE_MARGIN + COL_WIDTH * 2, IMAGE_HEIGHT - 0.75 * PPI);
   ctx.stroke();
 
   return canvas;
 }
 
-function get_batch_size() {
-  const printable_height = (PAGE_HEIGHT_IN - PAGE_MARGIN_IN * 2) * PPI;
-  const printable_width = (PAGE_WIDTH_IN - PAGE_MARGIN_IN * 2) * PPI;
+export function generate_batch(images, pageDims) {
+  let PAGE_SMALL_DIM = Math.min(...pageDims);
+  let PAGE_LARGE_DIM = Math.max(...pageDims);
+  const MINIMUM_MARGIN_IN = 0.25;
 
-  const height_portrait = Math.floor(printable_height / IMAGE_HEIGHT);
-  const width_portrait = Math.floor(printable_width / IMAGE_WIDTH);
+  const printable_small_dim = (PAGE_SMALL_DIM - MINIMUM_MARGIN_IN * 2) * PPI;
+  const printable_large_dim = (PAGE_LARGE_DIM - MINIMUM_MARGIN_IN * 2) * PPI;
 
-  const width_landscape = Math.floor(printable_height / IMAGE_WIDTH);
-  const height_landscape = Math.floor(printable_width / IMAGE_HEIGHT);
+  const height_portrait = Math.floor(printable_large_dim / IMAGE_HEIGHT);
+  const width_portrait = Math.floor(printable_small_dim / IMAGE_WIDTH);
 
-  if (width_landscape * height_landscape > width_portrait * height_portrait) {
-    return [width_landscape, height_landscape];
+  const width_landscape = Math.floor(printable_large_dim / IMAGE_WIDTH);
+  const height_landscape = Math.floor(printable_small_dim / IMAGE_HEIGHT);
+
+  let BATCH_HEIGHT, BATCH_WIDTH, PAGE_HEIGHT_IN, PAGE_WIDTH_IN;
+  if (width_landscape * height_landscape >= width_portrait * height_portrait) {
+    [BATCH_HEIGHT, BATCH_WIDTH] = [height_landscape, width_landscape];
+    [PAGE_HEIGHT_IN, PAGE_WIDTH_IN] = [PAGE_SMALL_DIM, PAGE_LARGE_DIM];
   } else {
-    return [width_portrait, height_portrait];
+    [BATCH_HEIGHT, BATCH_WIDTH] = [width_portrait, height_portrait];
+    [PAGE_HEIGHT_IN, PAGE_WIDTH_IN] = [PAGE_LARGE_DIM, PAGE_SMALL_DIM];
   }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = BATCH_WIDTH * IMAGE_WIDTH;
+  canvas.height = BATCH_HEIGHT * IMAGE_HEIGHT;
+  const ctx = canvas.getContext("2d");
+
+  ctx.save();
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  for (let i = 0; i < BATCH_HEIGHT; i++) {
+    for (let j = 0; j < BATCH_WIDTH; j++) {
+      if (i * BATCH_WIDTH + j >= images.length) {
+        continue;
+      }
+      ctx.drawImage(
+        images[i * BATCH_WIDTH + j],
+        j * IMAGE_WIDTH,
+        i * IMAGE_HEIGHT
+      );
+    }
+  }
+
+  return canvas;
 }
 
 const fontlink = document.createElement("link");
@@ -295,9 +337,3 @@ fontlink.onload = () => {
 };
 document.head.appendChild(fontlink);
 await fontPromise;
-
-let [BATCH_WIDTH, BATCH_HEIGHT] = get_batch_size();
-
-let pages = [];
-
-export { generate_deck_divider };
