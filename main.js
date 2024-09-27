@@ -50,17 +50,14 @@ let part1Loading = false;
 async function go() {
   if (part1Loading) return;
   part1Loading = true;
-  if (!localStorage.getItem("decks")) {
-    document.getElementById("stage-1-loading").hidden = false;
-    for (const { deck } of await fetch(
-      "https://decksofkeyforge.com/public-api/v1/my-decks",
-      { headers: { "Api-Key": apiKey.value } }
-    ).then((res) => res.json())) {
-      decks.set(deck.name, deck);
-    }
-    localStorage.setItem("apiKey", apiKey.value);
-    localStorage.setItem("decks", JSON.stringify([...decks.values()]));
+  document.getElementById("stage-1-loading").hidden = false;
+  for (const { deck } of await fetch(
+    "https://decksofkeyforge.com/public-api/v1/my-decks",
+    { headers: { "Api-Key": apiKey.value } }
+  ).then((res) => res.json())) {
+    decks.set(deck.name, deck);
   }
+  localStorage.setItem("apiKey", apiKey.value);
   updateDeckList();
   document.getElementById("stage-1").hidden = true;
   document.getElementById("stage-2").hidden = false;
