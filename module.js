@@ -3,8 +3,8 @@ const CARD_HEIGHT_IN = 3.5;
 const CARD_WIDTH_IN = 2.5;
 const DECK_DEPTH_IN = 0.5;
 
-export const IMAGE_HEIGHT = PPI * (CARD_HEIGHT_IN + DECK_DEPTH_IN);
-export const IMAGE_WIDTH = PPI * CARD_WIDTH_IN;
+const IMAGE_HEIGHT = PPI * (CARD_HEIGHT_IN + DECK_DEPTH_IN);
+const IMAGE_WIDTH = PPI * CARD_WIDTH_IN;
 
 const IMAGE_MARGIN = 0.07 * PPI;
 const HEADER_HEIGHT = DECK_DEPTH_IN * PPI;
@@ -21,7 +21,7 @@ function loadImage(src) {
   };
   return promise;
 }
-export const expansion_order = [
+const expansion_order = [
   "CALL_OF_THE_ARCHONS",
   "AGE_OF_ASCENSION",
   "WORLDS_COLLIDE",
@@ -38,13 +38,13 @@ export const expansion_order = [
   "MARTIAN_CIVIL_WAR",
   "MORE_MUTATION",
 ];
-const expansions = await Promise.all(
+const expansions = Promise.all(
   expansion_order.map(async (expansion) => [
     expansion,
     await loadImage(`./assets/sets/${expansion.replace(/_\d+$/, "")}.png`),
   ])
 ).then(Object.fromEntries);
-const houses = await Promise.all(
+const houses = Promise.all(
   [
     "Brobnar",
     "Dis",
@@ -68,7 +68,7 @@ const houses = await Promise.all(
   ])
 ).then(Object.fromEntries);
 
-function make_trigram(house_list) {
+async function make_trigram(house_list) {
   const canvas = document.createElement("canvas");
   canvas.width = HEADER_HEIGHT - IMAGE_MARGIN * 2;
   canvas.height = HEADER_HEIGHT - IMAGE_MARGIN * 2;
@@ -89,12 +89,19 @@ function make_trigram(house_list) {
     ];
   }
 
+  const awaitedHouses = await houses;
   if (house_list.length === 1) {
-    ctx.drawImage(houses[house_list[0]], 0, 0, canvas.height, canvas.width);
+    ctx.drawImage(
+      awaitedHouses[house_list[0]],
+      0,
+      0,
+      canvas.height,
+      canvas.width
+    );
   } else {
-    ctx.drawImage(houses[house_list[0]], ...coords((Math.PI * 4) / 3));
-    ctx.drawImage(houses[house_list[1]], ...coords(0));
-    ctx.drawImage(houses[house_list[2]], ...coords((Math.PI * 2) / 3));
+    ctx.drawImage(awaitedHouses[house_list[0]], ...coords((Math.PI * 4) / 3));
+    ctx.drawImage(awaitedHouses[house_list[1]], ...coords(0));
+    ctx.drawImage(awaitedHouses[house_list[2]], ...coords((Math.PI * 2) / 3));
   }
 
   return canvas;
@@ -139,7 +146,7 @@ function break_text(text, font, max_width) {
   return lines;
 }
 
-function generate_deck_divider(deck) {
+async function generate_deck_divider(deck) {
   const canvas = document.createElement("canvas");
   canvas.width = IMAGE_WIDTH;
   canvas.height = IMAGE_HEIGHT;
@@ -148,7 +155,9 @@ function generate_deck_divider(deck) {
   ctx.rect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
   ctx.stroke();
 
-  const trigram = make_trigram(deck.housesAndCards.map((house) => house.house));
+  const trigram = await make_trigram(
+    deck.housesAndCards.map((house) => house.house)
+  );
 
   ctx.drawImage(
     trigram,
@@ -156,7 +165,8 @@ function generate_deck_divider(deck) {
     IMAGE_MARGIN
   );
 
-  const expansion = expansions[deck.expansion];
+  const awaitedExpansions = await expansions;
+  const expansion = awaitedExpansions[deck.expansion];
   const expansion_ratio = expansion.height / expansion.width;
   const expansion_size = [
     Math.floor((1 / 3) * HEADER_HEIGHT),
@@ -170,6 +180,7 @@ function generate_deck_divider(deck) {
   );
 
   const name_font_size = HEADER_HEIGHT / 3;
+  await fontPromise;
   const name_font = `${name_font_size}px Righteous`;
   ctx.font = name_font;
   const name_line_height = ctx.measureText("M").fontBoundingBoxAscent;
@@ -196,6 +207,7 @@ function generate_deck_divider(deck) {
   ctx.stroke();
 
   const body_name_font_size = BODY_NAME_AREA / 3;
+  await fontPromise;
   const body_name_font = `${body_name_font_size}px Righteous`;
   const body_name_lines = break_text(
     deck.name,
@@ -219,10 +231,11 @@ function generate_deck_divider(deck) {
 
   const COL_WIDTH = (IMAGE_WIDTH - IMAGE_MARGIN * 2) / 3;
   const HOUSE_HEIGHT = COL_WIDTH / 3;
+  const awaitedHouses = await houses;
   for (let i = 0; i < deck.housesAndCards.length; i++) {
     const house_and_cards = deck.housesAndCards[i];
 
-    const house_image = houses[house_and_cards.house];
+    const house_image = await awaitedHouses[house_and_cards.house];
     ctx.drawImage(
       house_image,
       Math.floor(
@@ -273,8 +286,8 @@ function generate_deck_divider(deck) {
   return canvas;
 }
 
-export function generate_batch(decks, pageDims) {
-  const images = decks.map(generate_deck_divider);
+async function generate_batch(decks, pageDims) {
+  const images = await Promise.all(decks.map(generate_deck_divider));
   let PAGE_SMALL_DIM = Math.min(...pageDims);
   let PAGE_LARGE_DIM = Math.max(...pageDims);
   const MINIMUM_MARGIN_IN = 0.25;
@@ -350,4 +363,3 @@ fontlink.onload = () => {
   });
 };
 document.head.appendChild(fontlink);
-await fontPromise;
