@@ -1,3 +1,9 @@
+import { jsPDF } from "https://esm.sh/jspdf@2.5.2";
+
+import { generate_batch, expansion_order } from "./module.js";
+
+console.log("Am I running?");
+
 const apiKey = document.getElementById("api-key");
 const select = document.getElementById("select-decks");
 const sort = document.getElementById("deck-sort-controls");
@@ -60,14 +66,14 @@ async function go() {
 }
 
 async function go2() {
-  const { results, dims } = await generate_batch(
+  const { results, dims } = generate_batch(
     Array.from(select.selectedOptions, (opt) => decks.get(opt.value)),
     [8.5, 11]
   );
 
   const format = "letter";
   const orientation = dims[0] > dims[1] ? "landscape" : "portrait";
-  const doc = new jspdf.jsPDF({
+  const doc = new jsPDF({
     format,
     orientation,
     unit: "in",
