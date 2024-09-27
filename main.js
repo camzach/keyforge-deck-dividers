@@ -1,14 +1,11 @@
-import {
-  generate_deck_divider,
-  generate_batch,
-  expansion_order,
-} from "./module.js";
+import { jsPDF } from "https://esm.sh/jspdf@2.5.2";
+
+import { generate_batch, expansion_order } from "./module.js";
 
 const apiKey = document.getElementById("api-key");
 const select = document.getElementById("select-decks");
 const sort = document.getElementById("deck-sort-controls");
 const decks = new Map();
-window.decks = decks;
 
 function updateDeckList() {
   const matchingDecks = Array.from(decks.values())
@@ -53,29 +50,55 @@ let part1Loading = false;
 async function go() {
   if (part1Loading) return;
   part1Loading = true;
-  document.getElementById("stage-1-loading").hidden = false;
-  for (const { deck } of await fetch(
-    "https://decksofkeyforge.com/public-api/v1/my-decks",
-    { headers: { "Api-Key": apiKey.value } }
-  ).then((res) => res.json())) {
-    decks.set(deck.name, deck);
+  if (!localStorage.getItem("decks")) {
+    document.getElementById("stage-1-loading").hidden = false;
+    for (const { deck } of await fetch(
+      "https://decksofkeyforge.com/public-api/v1/my-decks",
+      { headers: { "Api-Key": apiKey.value } }
+    ).then((res) => res.json())) {
+      decks.set(deck.name, deck);
+    }
+    localStorage.setItem("apiKey", apiKey.value);
+    localStorage.setItem("decks", JSON.stringify([...decks.values()]));
   }
-  localStorage.setItem("apiKey", apiKey.value);
   updateDeckList();
   document.getElementById("stage-1").hidden = true;
   document.getElementById("stage-2").hidden = false;
 }
 
 async function go2() {
-  const images = Array.from(select.selectedOptions, (option) => {
-    const deck = decks.get(option.value);
-    return generate_deck_divider(deck);
+  const { results, dims } = generate_batch(
+    Array.from(select.selectedOptions, (opt) => decks.get(opt.value)),
+    [8.5, 11]
+  );
+
+  const format = "letter";
+  const orientation = dims[0] > dims[1] ? "landscape" : "portrait";
+  const doc = new jsPDF({
+    format,
+    orientation,
+    unit: "in",
   });
-  const batch = generate_batch(images, [8.5, 11]);
-  const image = new Image();
-  image.src = batch.toDataURL();
-  document.getElementById("result").replaceChildren(image);
-  document.getElementById("result").hidden = false;
+
+  const firstPage = results.shift();
+  doc.addImage(
+    firstPage,
+    "PNG",
+    (doc.getPageWidth() - dims[0]) / 2,
+    (doc.getPageHeight() - dims[1]) / 2,
+    ...dims
+  );
+  for (const page of results) {
+    doc.addPage(format, orientation);
+    doc.addImage(
+      page,
+      "PNG",
+      (doc.getPageWidth() - dims[0]) / 2,
+      (doc.getPageHeight() - dims[1]) / 2,
+      ...dims
+    );
+  }
+  doc.save("dividers.pdf");
 }
 
 document.getElementById("go").addEventListener("click", go);

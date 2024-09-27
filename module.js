@@ -139,7 +139,7 @@ function break_text(text, font, max_width) {
   return lines;
 }
 
-export function generate_deck_divider(deck) {
+function generate_deck_divider(deck) {
   const canvas = document.createElement("canvas");
   canvas.width = IMAGE_WIDTH;
   canvas.height = IMAGE_HEIGHT;
@@ -273,7 +273,8 @@ export function generate_deck_divider(deck) {
   return canvas;
 }
 
-export function generate_batch(images, pageDims) {
+export function generate_batch(decks, pageDims) {
+  const images = decks.map(generate_deck_divider);
   let PAGE_SMALL_DIM = Math.min(...pageDims);
   let PAGE_LARGE_DIM = Math.max(...pageDims);
   const MINIMUM_MARGIN_IN = 0.25;
@@ -296,30 +297,43 @@ export function generate_batch(images, pageDims) {
     [PAGE_HEIGHT_IN, PAGE_WIDTH_IN] = [PAGE_LARGE_DIM, PAGE_SMALL_DIM];
   }
 
-  const canvas = document.createElement("canvas");
-  canvas.width = BATCH_WIDTH * IMAGE_WIDTH;
-  canvas.height = BATCH_HEIGHT * IMAGE_HEIGHT;
-  const ctx = canvas.getContext("2d");
+  const results = [];
+  const batch_size = BATCH_HEIGHT * BATCH_WIDTH;
 
-  ctx.save();
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.restore();
+  for (let batch = 0; batch < images.length / batch_size; batch++) {
+    const canvas = document.createElement("canvas");
+    canvas.width = BATCH_WIDTH * IMAGE_WIDTH;
+    canvas.height = BATCH_HEIGHT * IMAGE_HEIGHT;
+    const ctx = canvas.getContext("2d");
 
-  for (let i = 0; i < BATCH_HEIGHT; i++) {
-    for (let j = 0; j < BATCH_WIDTH; j++) {
-      if (i * BATCH_WIDTH + j >= images.length) {
-        continue;
+    ctx.save();
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    for (let i = 0; i < BATCH_HEIGHT; i++) {
+      for (let j = 0; j < BATCH_WIDTH; j++) {
+        if (batch * batch_size + (i * BATCH_WIDTH + j) >= images.length) {
+          continue;
+        }
+        ctx.drawImage(
+          images[batch * batch_size + (i * BATCH_WIDTH + j)],
+          j * IMAGE_WIDTH,
+          i * IMAGE_HEIGHT
+        );
       }
-      ctx.drawImage(
-        images[i * BATCH_WIDTH + j],
-        j * IMAGE_WIDTH,
-        i * IMAGE_HEIGHT
-      );
     }
+
+    results.push(canvas);
   }
 
-  return canvas;
+  return {
+    results,
+    dims: [
+      (BATCH_WIDTH * IMAGE_WIDTH) / PPI,
+      (BATCH_HEIGHT * IMAGE_HEIGHT) / PPI,
+    ],
+  };
 }
 
 const fontlink = document.createElement("link");
