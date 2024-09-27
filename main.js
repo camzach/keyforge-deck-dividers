@@ -2,6 +2,8 @@ import { jsPDF } from "https://esm.sh/jspdf@2.5.2";
 
 import { generate_batch, expansion_order } from "./module.js";
 
+console.log("Am I running?");
+
 const apiKey = document.getElementById("api-key");
 const select = document.getElementById("select-decks");
 const sort = document.getElementById("deck-sort-controls");
