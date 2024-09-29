@@ -33,40 +33,47 @@ export const expansion_order = [
   "GRIM_REMINDERS",
   "MENAGERIE_2024",
   "VAULT_MASTERS_2024",
+  "MARTIAN_CIVIL_WAR",
   "AEMBER_SKIES",
   "TOKENS_OF_CHANGE",
-  "MARTIAN_CIVIL_WAR",
   "MORE_MUTATION",
 ];
-const expansions = await Promise.all(
-  expansion_order.map(async (expansion) => [
-    expansion,
-    await loadImage(`./assets/sets/${expansion.replace(/_\d+$/, "")}.png`),
-  ])
-).then(Object.fromEntries);
-const houses = await Promise.all(
-  [
-    "Brobnar",
-    "Dis",
-    "Ekwidon",
-    "Geistoid",
-    "Logos",
-    "Mars",
-    "Sanctum",
-    "Saurian",
-    "Shadows",
-    "StarAlliance",
-    "Unfathomable",
-    "Untamed",
-    "Elders",
-    "IronyxRebels",
-    "Skyborn",
-    "Redemption",
-  ].map(async (house) => [
-    house,
-    await loadImage(`./assets/houses/${house}.png`),
-  ])
-).then(Object.fromEntries);
+let expansions, houses;
+try {
+  expansions = await Promise.all(
+    expansion_order.map(async (expansion) => [
+      expansion,
+      await loadImage(`./assets/sets/${expansion.replace(/_\d+$/, "")}.png`),
+    ])
+  ).then(Object.fromEntries);
+  houses = await Promise.all(
+    [
+      "Brobnar",
+      "Dis",
+      "Ekwidon",
+      "Geistoid",
+      "Logos",
+      "Mars",
+      "Sanctum",
+      "Saurian",
+      "Shadows",
+      "StarAlliance",
+      "Unfathomable",
+      "Untamed",
+      "Elders",
+      "IronyxRebels",
+      "Skyborn",
+      "Redemption",
+    ].map(async (house) => [
+      house,
+      await loadImage(`./assets/houses/${house}.png`),
+    ])
+  ).then(Object.fromEntries);
+} catch {
+  alert(
+    "Failed to load set/house images. Please reload the page or try again later."
+  );
+}
 
 function make_trigram(house_list) {
   const canvas = document.createElement("canvas");

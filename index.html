@@ -1,34 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-  </head>
-  <body>
-    <div id="stage-1">
-      Enter your <a href="https://decksofkeyforge.com/about/sellers-and-devs">DOK API key</a>
-      <input id="api-key"></input>
-      <button id="go">Go</button>
-      <br/>
-      <span id="stage-1-loading" hidden>Loading decks...</span>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+
+<body>
+  <header>
+    <h1>Keyforge Deck Divider Generator</h1>
+  </header>
+  <main class="container">
+    <label for="api-key">Enter your <a href="https://decksofkeyforge.com/about/sellers-and-devs">DOK API key</a></label>
+    <div role="group">
+      <input id="api-key" type="password" placeholder="DOK API key"></input>
+      <button id="fetch-decks">Load&nbsp;Decks</button>
     </div>
-    <div id="stage-2" hidden>
-      <form id="deck-sort-controls">
-        Search <input id="search"></input>
-        Sort by name <input type="radio" value="name" name="sort-by" checked></input>
-        Sort by expansion <input type="radio" value="expansion" name="sort-by"></input>
-        Sort by date <input type="radio" value="date" name="sort-by"></input>
-        Sort asc <input type="radio" value="asc" name="sort-order"></input>
-        Sort desc <input type="radio" value="desc" name="sort-order"></input>
-      </form>
-      <br/>
-      <button id="select-all">Select All</button>
-      <br/>
-      <select multiple id="select-decks" style="height: 500px;"></select>
-      <button id="go-2">Go</button>
+    <input type="text" id="search" placeholder="Search for a deck by name"></input>
+    <div style="max-height: 50vh; overflow: auto;">
+      <table id="select-decks" style="position: relative;">
+        <thead>
+          <tr style="position: sticky; top: 0;">
+            <th><input type="checkbox" id="select-all"></input></th>
+            <th><label>Name <sort-button id="name-sort"></sort-button></label></th>
+            <th><label>Set <sort-button id="set-sort"></sort-button></label></th>
+            <th><label>Imported On <sort-button id="date-sort"></sort-button></label></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-    <div id="result" hidden="hidden"></div>
-    <script src="./main.js" type="module"></script>
-  </body>
+    <button id="create-pdf" style="width: 100%" disabled>Create PDF</button>
+  </main>
+  <script src="./main.js" type="module"></script>
+</body>
+
 </html>
