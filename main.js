@@ -12,6 +12,32 @@ const dateSort = document.getElementById("date-sort");
 const decks = new Map();
 const selectedDecks = new Map();
 
+const stopwords = new Set([
+  "of",
+  "the",
+  "and",
+  "in",
+  "to",
+  "for",
+  "a",
+  "on",
+  "by",
+  "with",
+  "is",
+  "at",
+]);
+function titleCase(str) {
+  return str
+    .toLowerCase()
+    .split("_")
+    .map((word) =>
+      stopwords.has(word.toLowerCase())
+        ? word
+        : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" ");
+}
+
 function updateDeckList() {
   const matchingDecks = Array.from(decks.values())
     .filter(
@@ -59,7 +85,7 @@ function updateDeckList() {
       }></input>
         </td>
         <td>${deck.name}</td>
-        <td>${deck.expansion}</td>
+        <td>${titleCase(deck.expansion)}</td>
         <td>${deck.dateAdded}</td>
       `;
       opt.querySelector("input").checked = selectedDecks.get(deck.name);
