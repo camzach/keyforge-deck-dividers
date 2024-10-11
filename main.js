@@ -54,7 +54,9 @@ function updateDeckList() {
       const opt = document.createElement("tr");
       opt.innerHTML = `
         <td>
-          <input type="checkbox" value="${deck.name}"></input>
+          <input type="checkbox" value="${deck.name}" ${
+        !expansion_order.includes(deck.expansion) ? 'disabled="true"' : ""
+      }></input>
         </td>
         <td>${deck.name}</td>
         <td>${deck.expansion}</td>
