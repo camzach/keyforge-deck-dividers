@@ -85,7 +85,10 @@ function updateDeckList() {
       }></input>
         </td>
         <td>${deck.name}</td>
-        <td>${titleCase(deck.expansion)}</td>
+        <td style="isolation: isolate; z-index: -1"><img src="./assets/sets/${deck.expansion.replace(
+          /_\d+$/,
+          ""
+        )}.png"></img>${titleCase(deck.expansion)}</td>
         <td>${deck.dateAdded}</td>
       `;
       opt.querySelector("input").checked = selectedDecks.get(deck.name);

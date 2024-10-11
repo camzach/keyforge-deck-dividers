@@ -1,0 +1,52 @@
+img {
+  width: 2ch;
+  margin-right: 0.25em;
+  filter: invert();
+}
+
+@media (prefers-color-scheme: light) {
+  img {
+    filter: none;
+  }
+}
+
+#create-pdf {
+  width: 100%;
+  margin-top: 1em;
+}
+
+div:has(> table) {
+  position: relative;
+  overflow: auto;
+  min-height: 0;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+:root {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  padding: 1em;
+}
+
+div:has(> main) {
+  display: grid;
+  height: 100%;
+  overflow: hidden;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
