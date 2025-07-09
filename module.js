@@ -37,6 +37,7 @@ export const expansion_order = [
   "AEMBER_SKIES",
   "TOKENS_OF_CHANGE",
   "MORE_MUTATION",
+  "PROPHETIC_VISIONS",
 ];
 let expansions, houses;
 try {
@@ -44,7 +45,7 @@ try {
     expansion_order.map(async (expansion) => [
       expansion,
       await loadImage(`./assets/sets/${expansion.replace(/_\d+$/, "")}.png`),
-    ])
+    ]),
   ).then(Object.fromEntries);
   houses = await Promise.all(
     [
@@ -67,11 +68,11 @@ try {
     ].map(async (house) => [
       house,
       await loadImage(`./assets/houses/${house}.png`),
-    ])
+    ]),
   ).then(Object.fromEntries);
 } catch {
   alert(
-    "Failed to load set/house images. Please reload the page or try again later."
+    "Failed to load set/house images. Please reload the page or try again later.",
   );
 }
 
@@ -160,7 +161,7 @@ function generate_deck_divider(deck) {
   ctx.drawImage(
     trigram,
     IMAGE_WIDTH - trigram.width - IMAGE_MARGIN,
-    IMAGE_MARGIN
+    IMAGE_MARGIN,
   );
 
   const expansion = expansions[deck.expansion];
@@ -173,7 +174,7 @@ function generate_deck_divider(deck) {
     expansion,
     IMAGE_MARGIN,
     Math.floor((HEADER_HEIGHT - expansion_size[1]) / 2),
-    ...expansion_size
+    ...expansion_size,
   );
 
   const name_font_size = HEADER_HEIGHT / 3;
@@ -183,7 +184,7 @@ function generate_deck_divider(deck) {
   const header_name_lines = break_text(
     deck.name,
     name_font,
-    IMAGE_WIDTH - trigram.width - expansion_size[0] - IMAGE_MARGIN * 4
+    IMAGE_WIDTH - trigram.width - expansion_size[0] - IMAGE_MARGIN * 4,
   );
 
   const header_name_y =
@@ -194,7 +195,7 @@ function generate_deck_divider(deck) {
   draw_multiline_text(
     header_name_lines,
     [expansion_size[0] + IMAGE_MARGIN * 2, header_name_y],
-    ctx
+    ctx,
   );
 
   ctx.beginPath();
@@ -207,7 +208,7 @@ function generate_deck_divider(deck) {
   const body_name_lines = break_text(
     deck.name,
     body_name_font,
-    IMAGE_WIDTH - IMAGE_MARGIN * 2
+    IMAGE_WIDTH - IMAGE_MARGIN * 2,
   );
   ctx.font = body_name_font;
   const body_name_line_height = ctx.measureText("M").fontBoundingBoxAscent;
@@ -233,11 +234,11 @@ function generate_deck_divider(deck) {
     ctx.drawImage(
       house_image,
       Math.floor(
-        IMAGE_MARGIN + COL_WIDTH * i + COL_WIDTH / 2 - IMAGE_MARGIN * 2
+        IMAGE_MARGIN + COL_WIDTH * i + COL_WIDTH / 2 - IMAGE_MARGIN * 2,
       ),
       CARD_AREA_TOP,
       HOUSE_HEIGHT,
-      HOUSE_HEIGHT
+      HOUSE_HEIGHT,
     );
 
     let last_bottom = CARD_AREA_TOP + HOUSE_HEIGHT + IMAGE_MARGIN;
@@ -248,7 +249,7 @@ function generate_deck_divider(deck) {
       const lines = break_text(
         card.cardTitle,
         card_name_font,
-        COL_WIDTH - IMAGE_MARGIN * 2
+        COL_WIDTH - IMAGE_MARGIN * 2,
       );
       const pos = [
         IMAGE_MARGIN + COL_WIDTH * i + (i > 0 ? IMAGE_MARGIN : 0),
@@ -326,7 +327,7 @@ export function generate_batch(decks, pageDims) {
         ctx.drawImage(
           images[batch * batch_size + (i * BATCH_WIDTH + j)],
           j * IMAGE_WIDTH,
-          i * IMAGE_HEIGHT
+          i * IMAGE_HEIGHT,
         );
       }
     }

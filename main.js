@@ -1,4 +1,4 @@
-import { jsPDF } from "https://esm.sh/jspdf@2.5.2";
+import { jsPDF } from "https://esm.sh/jspdf@3.0.1";
 
 import { generate_batch, expansion_order } from "./module.js";
 
@@ -33,7 +33,7 @@ function titleCase(str) {
     .map((word) =>
       stopwords.has(word.toLowerCase())
         ? word
-        : word.charAt(0).toUpperCase() + word.slice(1)
+        : word.charAt(0).toUpperCase() + word.slice(1),
     )
     .join(" ");
 }
@@ -43,7 +43,7 @@ function updateDeckList() {
     .filter(
       (deck) =>
         search.value === "" ||
-        deck.name.toLowerCase().includes(search.value.toLowerCase())
+        deck.name.toLowerCase().includes(search.value.toLowerCase()),
     )
     .sort((a, b) => {
       if (nameSort.getAttribute("sort-order") === "asc") {
@@ -81,13 +81,13 @@ function updateDeckList() {
       opt.innerHTML = `
         <td>
           <input type="checkbox" value="${deck.name}" ${
-        !expansion_order.includes(deck.expansion) ? 'disabled="true"' : ""
-      }></input>
+            !expansion_order.includes(deck.expansion) ? 'disabled="true"' : ""
+          }></input>
         </td>
         <td>${deck.name}</td>
         <td style="isolation: isolate; z-index: -1"><img src="./assets/sets/${deck.expansion.replace(
           /_\d+$/,
-          ""
+          "",
         )}.png"></img>${titleCase(deck.expansion)}</td>
         <td>${deck.dateAdded}</td>
       `;
@@ -133,8 +133,9 @@ async function fetchDecks() {
   document.getElementById("fetch-decks").ariaBusy = true;
   const fetchedDecks = await fetch(
     "https://decksofkeyforge.com/public-api/v1/my-decks",
-    { headers: { "Api-Key": apiKey.value } }
+    { headers: { "Api-Key": apiKey.value } },
   ).then((res) => res.json());
+  console.log(fetchedDecks);
   decks.clear();
   selectedDecks.clear();
   for (const { deck } of fetchedDecks) {
@@ -150,7 +151,8 @@ async function fetchDecks() {
 
 async function generatePDF() {
   const selectedDeckData = Array.from(selectedDecks.entries()).flatMap(
-    ([name, selected]) => (decks.has(name) && selected ? [decks.get(name)] : [])
+    ([name, selected]) =>
+      decks.has(name) && selected ? [decks.get(name)] : [],
   );
 
   const { results, dims } = generate_batch(selectedDeckData, [8.5, 11]);
@@ -168,7 +170,7 @@ async function generatePDF() {
     "PNG",
     (doc.getPageWidth() - dims[0]) / 2,
     (doc.getPageHeight() - dims[1]) / 2,
-    ...dims
+    ...dims,
   );
   for (const page of results) {
     doc.addPage(format, orientation);
@@ -177,7 +179,7 @@ async function generatePDF() {
       "PNG",
       (doc.getPageWidth() - dims[0]) / 2,
       (doc.getPageHeight() - dims[1]) / 2,
-      ...dims
+      ...dims,
     );
   }
   doc.save("dividers.pdf");
