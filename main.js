@@ -1,6 +1,7 @@
 import { jsPDF } from "https://esm.sh/jspdf@3.0.1";
 
 import { generate_batch, expansion_order } from "./module.js";
+import { loadDecks, saveDecks } from "./database.js";
 
 const apiKey = document.getElementById("api-key");
 const search = document.getElementById("search");
@@ -143,7 +144,7 @@ async function fetchDecks() {
     selectedDecks.set(deck.name, false);
   }
   localStorage.setItem("apiKey", apiKey.value);
-  localStorage.setItem("decks", JSON.stringify([...decks.values()]));
+  await saveDecks([...decks.values()]);
   updateDeckList();
   fetchingDecks = false;
   document.getElementById("fetch-decks").ariaBusy = false;
@@ -192,18 +193,18 @@ selectAll.addEventListener("change", (e) => {
   selectedDecks.forEach((_, name) => selectedDecks.set(name, e.target.checked));
   updateDeckList();
 });
-const storedDecks = localStorage.getItem("decks");
-if (storedDecks) {
-  try {
-    for (const deck of JSON.parse(storedDecks)) {
-      decks.set(deck.name, deck);
-      selectedDecks.set(deck.name, false);
+
+loadDecks()
+  .then((storedDecks) => {
+    if (storedDecks) {
+      for (const deck of storedDecks) {
+        decks.set(deck.name, deck);
+        selectedDecks.set(deck.name, false);
+      }
+      updateDeckList();
     }
-    updateDeckList();
-  } catch {
-    localStorage.removeItem("decks");
-  }
-}
+  })
+  .catch(console.error);
 
 apiKey.value = localStorage.getItem("apiKey");
 nameSort.addEventListener("click", () => {
