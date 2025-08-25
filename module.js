@@ -37,7 +37,9 @@ export const expansion_order = [
   "AEMBER_SKIES",
   "TOKENS_OF_CHANGE",
   "MORE_MUTATION",
+  "VAULT_MASTERS_2025",
   "PROPHETIC_VISIONS",
+  "CRUCIBLE_CLASH",
 ];
 let expansions, houses;
 try {
