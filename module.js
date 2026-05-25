@@ -40,6 +40,8 @@ export const expansion_order = [
   "VAULT_MASTERS_2025",
   "PROPHETIC_VISIONS",
   "CRUCIBLE_CLASH",
+  "DRACONIAN_MEASURES",
+  "VAULT_MASTERS_2026",
 ];
 let expansions, houses;
 try {
@@ -67,6 +69,7 @@ try {
       "IronyxRebels",
       "Skyborn",
       "Redemption",
+      "Ouboros",
     ].map(async (house) => [
       house,
       await loadImage(`./assets/houses/${house}.png`),
