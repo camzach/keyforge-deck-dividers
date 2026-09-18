@@ -1,7 +1,7 @@
 import { jsPDF } from "https://esm.sh/jspdf@3.0.1";
 
 import { generate_batch, expansion_order } from "./module.js";
-import { loadDecks, saveDecks } from "./database.js";
+import { loadDecks, saveDecks, setDeckPrinted } from "./database.js";
 
 const apiKey = document.getElementById("api-key");
 const search = document.getElementById("search");
@@ -10,8 +10,11 @@ const selectAll = document.getElementById("select-all");
 const nameSort = document.getElementById("name-sort");
 const setSort = document.getElementById("set-sort");
 const dateSort = document.getElementById("date-sort");
+const selectedSort = document.getElementById("selected-sort");
+const printedSort = document.getElementById("printed-sort");
 const decks = new Map();
 const selectedDecks = new Map();
+const printedDecks = new Map();
 
 const stopwords = new Set([
   "of",
@@ -47,14 +50,26 @@ function updateDeckList() {
         deck.name.toLowerCase().includes(search.value.toLowerCase()),
     )
     .sort((a, b) => {
+      if (selectedSort.getAttribute("sort-order") === "asc") {
+        return (selectedDecks.get(b.name) ? 1 : 0) - (selectedDecks.get(a.name) ? 1 : 0);
+      } else if (selectedSort.getAttribute("sort-order") === "desc") {
+        return (selectedDecks.get(a.name) ? 1 : 0) - (selectedDecks.get(b.name) ? 1 : 0);
+      }
+
+      if (printedSort.getAttribute("sort-order") === "asc") {
+        return (printedDecks.get(b.name) ? 1 : 0) - (printedDecks.get(a.name) ? 1 : 0);
+      } else if (printedSort.getAttribute("sort-order") === "desc") {
+        return (printedDecks.get(a.name) ? 1 : 0) - (printedDecks.get(b.name) ? 1 : 0);
+      }
+
       if (nameSort.getAttribute("sort-order") === "asc") {
         return a.name
-          .replace(/^[“”]/, "")
-          .localeCompare(b.name.replace(/^[“”]/, ""));
+          .replace(/^[""]/, "")
+          .localeCompare(b.name.replace(/^[""]/, ""));
       } else if (nameSort.getAttribute("sort-order") === "desc") {
         return b.name
-          .replace(/^[“”]/, "")
-          .localeCompare(a.name.replace(/^[“”]/, ""));
+          .replace(/^[""]/, "")
+          .localeCompare(a.name.replace(/^[""]/, ""));
       }
 
       if (setSort.getAttribute("sort-order") === "asc") {
@@ -81,7 +96,7 @@ function updateDeckList() {
       const opt = document.createElement("tr");
       opt.innerHTML = `
         <td>
-          <input type="checkbox" value="${deck.name}" ${
+          <input name="select" type="checkbox" value="${deck.name}" ${
             !expansion_order.includes(deck.expansion) ? 'disabled="true"' : ""
           }></input>
         </td>
@@ -91,12 +106,27 @@ function updateDeckList() {
           "",
         )}.png"></img>${titleCase(deck.expansion)}</td>
         <td>${deck.dateAdded}</td>
+        <td><input name="printed" type="checkbox"></input></td>
       `;
-      opt.querySelector("input").checked = selectedDecks.get(deck.name);
-      opt.querySelector("input").addEventListener("change", (e) => {
+      const selectCheck = opt.querySelector("input[name=select]");
+      selectCheck.checked = selectedDecks.get(deck.name);
+      selectCheck.addEventListener("change", (e) => {
         selectedDecks.set(deck.name, e.target.checked);
-        updateSelectAll();
-        updatePDFButton();
+        if (selectedSort.getAttribute("sort-order")) {
+          updateDeckList();
+        } else {
+          updateSelectAll();
+          updatePDFButton();
+        }
+      });
+      const printedCheck = opt.querySelector("input[name=printed]");
+      printedCheck.checked = printedDecks.get(deck.name) ?? false;
+      printedCheck.addEventListener("change", (e) => {
+        printedDecks.set(deck.name, e.target.checked);
+        setDeckPrinted(deck.name, e.target.checked).catch(console.error);
+        if (printedSort.getAttribute("sort-order")) {
+          updateDeckList();
+        }
       });
       return opt;
     });
@@ -142,6 +172,9 @@ async function fetchDecks() {
   for (const { deck } of fetchedDecks) {
     decks.set(deck.name, deck);
     selectedDecks.set(deck.name, false);
+    if (!printedDecks.has(deck.name)) {
+      printedDecks.set(deck.name, false);
+    }
   }
   localStorage.setItem("apiKey", apiKey.value);
   await saveDecks([...decks.values()]);
@@ -200,6 +233,7 @@ loadDecks()
       for (const deck of storedDecks) {
         decks.set(deck.name, deck);
         selectedDecks.set(deck.name, false);
+        printedDecks.set(deck.name, deck.printed ?? false);
       }
       updateDeckList();
     }
@@ -210,16 +244,36 @@ apiKey.value = localStorage.getItem("apiKey");
 nameSort.addEventListener("click", () => {
   setSort.removeAttribute("sort-order");
   dateSort.removeAttribute("sort-order");
+  selectedSort.removeAttribute("sort-order");
+  printedSort.removeAttribute("sort-order");
   updateDeckList();
 });
 setSort.addEventListener("click", () => {
   nameSort.removeAttribute("sort-order");
   dateSort.removeAttribute("sort-order");
+  selectedSort.removeAttribute("sort-order");
+  printedSort.removeAttribute("sort-order");
   updateDeckList();
 });
 dateSort.addEventListener("click", () => {
   nameSort.removeAttribute("sort-order");
   setSort.removeAttribute("sort-order");
+  selectedSort.removeAttribute("sort-order");
+  printedSort.removeAttribute("sort-order");
+  updateDeckList();
+});
+selectedSort.addEventListener("click", () => {
+  nameSort.removeAttribute("sort-order");
+  setSort.removeAttribute("sort-order");
+  dateSort.removeAttribute("sort-order");
+  printedSort.removeAttribute("sort-order");
+  updateDeckList();
+});
+printedSort.addEventListener("click", () => {
+  nameSort.removeAttribute("sort-order");
+  setSort.removeAttribute("sort-order");
+  dateSort.removeAttribute("sort-order");
+  selectedSort.removeAttribute("sort-order");
   updateDeckList();
 });
 

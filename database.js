@@ -25,13 +25,38 @@ function openDB() {
 
 export async function saveDecks(decks) {
   const db = await openDB();
+  const existing = await new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  const printedByName = new Map(existing.map((d) => [d.name, d.printed ?? false]));
+
   const transaction = db.transaction(STORE_NAME, "readwrite");
   const store = transaction.objectStore(STORE_NAME);
   store.clear();
   for (const deck of decks) {
-    store.add(deck);
+    store.add({ ...deck, printed: printedByName.get(deck.name) ?? false });
   }
   return transaction.complete;
+}
+
+export async function setDeckPrinted(name, printed) {
+  const db = await openDB();
+  const transaction = db.transaction(STORE_NAME, "readwrite");
+  const store = transaction.objectStore(STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const getReq = store.get(name);
+    getReq.onsuccess = () => {
+      const deck = getReq.result;
+      if (!deck) return resolve();
+      const putReq = store.put({ ...deck, printed });
+      putReq.onsuccess = () => resolve();
+      putReq.onerror = () => reject(putReq.error);
+    };
+    getReq.onerror = () => reject(getReq.error);
+  });
 }
 
 export async function loadDecks() {
